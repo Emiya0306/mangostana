@@ -1,0 +1,27 @@
+{
+  "name": "mangostana",
+  "version": "0.0.1",
+  "description": "no",
+  "main": "index.js",
+  "scripts": {
+    "start": "node .",
+    "test": "node ./test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Emiya0306/mangostana.git"
+  },
+  "author": "Emiya0306",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Emiya0306/mangostana/issues"
+  },
+  "homepage": "https://github.com/Emiya0306/mangostana#readme",
+  "dependencies": {
+    "mongoose": "^4.5.8",
+    "pluralize": "^3.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^3.2.2"
+  }
+}

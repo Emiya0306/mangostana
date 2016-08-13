@@ -1,0 +1,12 @@
+{
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module"
+  },
+  "rules": {
+    "quotes": ["warn", "single"],
+    "semi": ["warn", "never"],
+    "no-spaced-func": "warn",
+    "space-before-function-paren": ["warn", "always"]
+  }
+}
