@@ -31,7 +31,7 @@ mangostana.connect('mongodb://localhost/test')
 mangostana.createModel('user', { name:  String })
 mangostana.createModel('article', { title:  String, content: String })
 
-const user = new mangostana.models.user({ name: 'Hey! I'm a foo!' })
+const user = new mangostana.models.user({ name: 'Hey! I\'m a foo!' })
 const article = new mangostana.models.article({ title: 'article', content: 'content' })
 
 let userResult, articleResult
