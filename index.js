@@ -122,6 +122,13 @@ class Mangostana {
         })
     }
 
+    /**
+     *
+     * @param modelName
+     * @param queryOpts
+     * @returns {*}
+     * @private
+     */
     _addGetRelationMethod (modelName, queryOpts) {
         const self = getMangostana()
         const thisModelName = pluralize.singular(this.collection.name, 1)
@@ -162,6 +169,13 @@ class Mangostana {
             })
     }
 
+    /**
+     *
+     * @param queryOpts
+     * @param thatModelName
+     * @returns {{}}
+     * @private
+     */
     _generateQuery (queryOpts = {}, thatModelName) {
         let query = {}
 

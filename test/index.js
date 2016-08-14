@@ -3,16 +3,16 @@ const test = require('./test')
 
 mangostana.connect('mongodb://localhost/test')
 
-mangostana.createModel('user', { name:  String })
-mangostana.createModel('article', { title:  String, content: String })
+mangostana.createModel('user', {name: String})
+mangostana.createModel('article', {title: String, content: String})
 
-const user = new mangostana.models.user({ name: 'Zildjian' })
-const article1 = new mangostana.models.article({ title: 'article1', content: 'content1' })
-const article2 = new mangostana.models.article({ title: 'article2', content: 'content2' })
-const article3 = new mangostana.models.article({ title: 'article1', content: 'content3' })
+const user = new mangostana.models.user({name: 'Zildjian'})
+const article1 = new mangostana.models.article({title: 'article1', content: 'content1'})
+const article2 = new mangostana.models.article({title: 'article2', content: 'content2'})
+const article3 = new mangostana.models.article({title: 'article1', content: 'content3'})
 
 var userResult, article1Result, article2Result, article3Result
-var query = { title: 'article1', content: 'content3' }
+var query = {title: 'article1', content: 'content3'}
 
 user.save()
     .then((result) => {
@@ -45,4 +45,25 @@ user.save()
     })
     .catch((err) => console.log(err))
 
-
+//const user = new mangostana.models.user({name: 'Zildjian'})
+//const article = new mangostana.models.article({title: 'article', content: 'content1'})
+//
+//let userResult, articleResult
+//
+//Promise
+//    .all([
+//        user.save(),
+//        article.save()
+//    ])
+//    .then((result) => {
+//        userResult = result[0]
+//        articleResult = result[1]
+//
+//        return userResult.link(articleResult)
+//    })
+//    .then(() => {
+//        return userResult.getRelation('articles', {title: 'article'})
+//    })
+//    .then((relatedArticle) => {
+//        console.log(relatedArticle)
+//    })
