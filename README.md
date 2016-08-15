@@ -124,5 +124,5 @@ npm run test
 Roger [@Emiya0306](https://github.com/Emiya0306)
 
 #License
-Copyright Mike Sabatini 2016
+Copyright Roger 2016
 Licensed under the MIT License. Enjoy
