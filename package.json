@@ -6,6 +6,15 @@
   "author": "Emiya0306",
   "license": "MIT",
   "homepage": "https://github.com/Emiya0306/mangostana#readme",
+  "keywords": [
+    "mongodb",
+    "mongoose",
+    "schema",
+    "model",
+    "document",
+    "database",
+    "data"
+  ],
   "scripts": {
     "start": "node .",
     "test": "node ./test"
