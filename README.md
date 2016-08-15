@@ -1,9 +1,7 @@
 # Mangostana
 
 [![npm version](https://badge.fury.io/js/mangostana.svg)](https://badge.fury.io/js/mangostana)
-
 [![Github All Releases](https://img.shields.io/github/downloads/atom/atom/total.svg?maxAge=2592000)](https://github.com/Emiya0306/mangostana)
-
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](https://github.com/Emiya0306/mangostana)
 
 A simple database process framework based on mongoose to deal with documents relationship.
