@@ -113,3 +113,17 @@ userResult.getRelation('articles', {title: 'article'})
 It will use observe on createModel API, and auto assign model methods on documents.
 
 Just like `user.articles()`, `user.articles(query).tags(query)`, `user.articles().unlink()`.
+
+# Tests
+Test can be run simply
+
+```bash
+npm run test
+```
+
+#Authors
+Roger [@Emiya0306](https://github.com/Emiya0306)
+
+#License
+Copyright Mike Sabatini 2016
+Licensed under the MIT License. Enjoy

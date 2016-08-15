@@ -161,8 +161,8 @@ class Mangostana {
             {$match: query},
             // group the documents together
             {$group: {_id: `$${thisModelName}Id`, [thatModelName]: {$addToSet: `$${thatModelName}`}}}
-            // group has 100 MB of RAM, allowDiskUse can write data to temporary files
         )
+            // group has 100 MB of RAM, allowDiskUse can write data to temporary files
             .allowDiskUse(true)
             .then((result) => {
                 return result[0][thatModelName]
