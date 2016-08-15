@@ -1,8 +1,11 @@
 # Mangostana
 
 [![Build Status][build-badge-img]][build-url]
+
 [![NPM version][npm-version-img]][npm-url]
+
 [![NPM downloads per month][npm-downloads-img]][npm-url]
+
 [![NPM license][npm-license-img]][npm-url]
 
 A simple database process framework based on mongoose to deal with documents relationship.
