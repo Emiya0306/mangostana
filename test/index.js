@@ -1,69 +1,64 @@
+const mongoose = require('mongoose')
 const mangostana = require('../')
-const test = require('./test')
 
-mangostana.connect('mongodb://localhost/test')
+mongoose.connect('mongodb://localhost/test')
 
-mangostana.createModel('user', {name: String})
-mangostana.createModel('article', {title: String, content: String})
+mangostana(mongoose)
 
-const user = new mangostana.models.user({name: 'Zildjian'})
-const article1 = new mangostana.models.article({title: 'article1', content: 'content1'})
-const article2 = new mangostana.models.article({title: 'article2', content: 'content2'})
-const article3 = new mangostana.models.article({title: 'article1', content: 'content3'})
+const Cat = mongoose.model('Cat', { name: String })
+const Dog = mongoose.model('Dog', { name: String })
 
-var userResult, article1Result, article2Result, article3Result
-var query = {title: 'article1', content: 'content3'}
+const kitty = new Cat({ name: 'kitty' })
+const snoopy = new Dog({ name: 'snoopy' })
 
-user.save()
+const aa = new Cat({ name: 'aa' })
+const bb = new Dog({ name: 'bb' })
+
+let catResult1, dogResult1, catResult2, dogResult2
+
+kitty.save()
     .then((result) => {
-        userResult = result
-        return article1.save()
+        catResult1 = result
+
+        return snoopy.save()
     })
     .then((result) => {
-        article1Result = result
-        return userResult.link(article1Result)
+        dogResult1 = result
+
+        return aa.save()
+    })
+    .then((result) => {
+        catResult2 = result
+
+        return bb.save()
+    })
+    .then((result) => {
+        dogResult2 = result
     })
     .then(() => {
-        return article2.save()
+        return catResult1.link(dogResult1)
     })
-    .then((result) => {
-        article2Result = result
-        return userResult.link(article2Result)
-    })
-    .then(() => {
-        return article3.save()
-    })
-    .then((result) => {
-        article3Result = result
-        return userResult.link(article3Result)
+    .then((relation) => {
+        console.log(relation)
     })
     .then(() => {
-        return userResult.getRelation('articles', query)
+        return catResult2.link(dogResult2)
+    })
+    .then((relation) => {
+        console.log(relation)
+    })
+    .then(() => {
+        return catResult1.getRelation('Dog', {name: 'snoopy'})
     })
     .then((result) => {
-        console.log('userResult.getRelation("article")', result)
+        console.log('result', result)
     })
-    .catch((err) => console.log(err))
-
-//const user = new mangostana.models.user({name: 'Zildjian'})
-//const article = new mangostana.models.article({title: 'article', content: 'content1'})
-//
-//let userResult, articleResult
-//
-//Promise
-//    .all([
-//        user.save(),
-//        article.save()
-//    ])
-//    .then((result) => {
-//        userResult = result[0]
-//        articleResult = result[1]
-//
-//        return userResult.link(articleResult)
-//    })
-//    .then(() => {
-//        return userResult.getRelation('articles', {title: 'article'})
-//    })
-//    .then((relatedArticle) => {
-//        console.log(relatedArticle)
-//    })
+    .then(() => {
+        return catResult1.unlink(dogResult1)
+    })
+    .then(() => {
+        return catResult2.unlink(dogResult2)
+    })
+    .catch((err) => {
+        console.log('err', err)
+    })

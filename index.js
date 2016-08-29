@@ -1,93 +1,39 @@
-const mongoose = require('mongoose')
 const pluralize = require('pluralize')
-const Schema = mongoose.Schema
+
+var self
 
 class Mangostana {
-
-    constructor () {
-        this.models = {}
-        this.schemas = {}
-        this.mappings = {}
+    constructor (mongoose) {
+        this.mongoose = mongoose
+        this.Schema = mongoose.Schema
+        this.models = mongoose.models
 
         mongoose.Promise = global.Promise
+        mongoose.plugin(this.enhanceSchema.bind(this))
     }
 
-    connect (connectString) {
-        mongoose.connect(connectString)
+    enhanceSchema (schema) {
+        schema.method('link', this.link)
+        schema.method('unlink', this.unlink)
+        schema.method('getRelation', this.getRelation)
     }
 
-    /**
-     *
-     * @param modelName
-     * @param schema
-     * @param options
-     * @returns {*}
-     */
-    createModel (modelName, schema, options) {
-        this._createMongooseSchema(modelName, schema, options)
-        this._createMongooseModel(modelName)
-
-        return this.models[modelName]
-    }
-
-    /**
-     *
-     * @param modelName
-     * @param schema
-     * @param options
-     * @private
-     */
-    _createMongooseSchema (modelName, schema, options) {
-        this.schemas[modelName] = new Schema(schema, options || {timestamps: true})
-        this.schemas[modelName].method('link', this._addLinkMethod)
-        this.schemas[modelName].method('unlink', this._addUnlinkMethod)
-        this.schemas[modelName].method('getRelation', this._addGetRelationMethod)
-    }
-
-    /**
-     *
-     * @param modelName
-     * @private
-     */
-    _createMongooseModel (modelName) {
-        this.models[modelName] = mongoose.model(modelName, this.schemas[modelName])
-    }
-
-    /**
-     *
-     * @param thisCollectionName
-     * @param thatCollectionName
-     * @returns {*}
-     * @private
-     */
-    _generateMappingName (thisCollectionName, thatCollectionName) {
-        return thisCollectionName.toLowerCase() > thatCollectionName.toLowerCase() ?
-            `${thatCollectionName}-${thisCollectionName}` :
-            `${thisCollectionName}-${thatCollectionName}`
-    }
-
-    /**
-     *
-     * @param linkedModel
-     * @returns {Promise|*}
-     * @private
-     */
-    _addLinkMethod (linkedModel) {
-        const self = getMangostana(), that = linkedModel
-
+    link (that) {
         const thisModelName = pluralize.singular(this.collection.name, 1)
         const thatModelName = pluralize.singular(that.collection.name, 1)
 
         const mappingName = self._generateMappingName(thisModelName, thatModelName)
 
-        if (!self.mappings[mappingName]) {
-            self.mappings[mappingName] = self.createModel(mappingName, {
-                [`${thisModelName}Id`]: Schema.Types.ObjectId,
-                [`${thatModelName}Id`]: Schema.Types.ObjectId
-            }, {collection: mappingName})
-        }
+        const hasMapping = self.checkMapping(mappingName)
 
-        const mapping = new self.mappings[mappingName]({
+        const mappingSchema = new self.Schema({
+            [`${thisModelName}Id`]: self.Schema.Types.ObjectId,
+            [`${thatModelName}Id`]: self.Schema.Types.ObjectId
+        }, {collection: mappingName})
+
+        const Mapping = hasMapping ? self.mongoose.models[mappingName] : self.mongoose.model(mappingName, mappingSchema)
+
+        const mapping = new Mapping({
             [`${thisModelName}Id`]: this._id,
             [`${thatModelName}Id`]: that._id
         })
@@ -95,66 +41,49 @@ class Mangostana {
         return mapping.save()
     }
 
-    /**
-     *
-     * @param linkedModel
-     * @returns {*|Query}
-     * @private
-     */
-    _addUnlinkMethod (linkedModel) {
-        const self = getMangostana(), that = linkedModel
-
+    unlink (that) {
         const thisModelName = pluralize.singular(this.collection.name, 1)
         const thatModelName = pluralize.singular(that.collection.name, 1)
 
         const mappingName = self._generateMappingName(thisModelName, thatModelName)
 
-        if (!self.mappings[mappingName]) {
-            self.mappings[mappingName] = self.createModel(mappingName, {
-                [`${thisModelName}Id`]: Schema.Types.ObjectId,
-                [`${thatModelName}Id`]: Schema.Types.ObjectId
-            }, {collection: mappingName})
-        }
+        const hasMapping = self.checkMapping(mappingName)
 
-        return self.mappings[mappingName].findOneAndRemove({
+        const mappingSchema = new self.Schema({
+            [`${thisModelName}Id`]: self.Schema.Types.ObjectId,
+            [`${thatModelName}Id`]: self.Schema.Types.ObjectId
+        }, {collection: mappingName})
+
+        const Mapping = hasMapping ? self.mongoose.models[mappingName] : self.mongoose.model(mappingName, mappingSchema)
+
+        return Mapping.findOneAndRemove({
             [`${thisModelName}Id`]: this._id,
             [`${thatModelName}Id`]: that._id
         })
     }
 
-    /**
-     *
-     * @param modelName
-     * @param queryOpts
-     * @returns {*}
-     * @private
-     */
-    _addGetRelationMethod (modelName, queryOpts) {
-        const self = getMangostana()
+    getRelation (modelName, queryOpts) {
         const thisModelName = pluralize.singular(this.collection.name, 1)
-        const thatModelName = pluralize.singular(modelName, 1)
+        const thatModelName = pluralize.singular(modelName.toLowerCase(), 1)
+        const relatedCollectionName = pluralize.plural(modelName.toLowerCase(), 4)
         const query = self._generateQuery(queryOpts, thatModelName)
-
-        if (!self.models[thatModelName]) return null
 
         const mappingName = self._generateMappingName(thisModelName, thatModelName)
 
-        let mapping
+        const hasMapping = self.checkMapping(mappingName)
 
-        if (!self.mappings[mappingName]) {
-            mapping = self.createModel(mappingName, {
-                [`${thisModelName}Id`]: Schema.Types.ObjectId,
-                [`${thatModelName}Id`]: Schema.Types.ObjectId
-            }, {collection: mappingName})
-        } else {
-            mapping = self.mappings[mappingName]
-        }
+        const mappingSchema = new self.Schema({
+            [`${thisModelName}Id`]: self.Schema.Types.ObjectId,
+            [`${thatModelName}Id`]: self.Schema.Types.ObjectId
+        }, {collection: mappingName})
 
-        return mapping.aggregate(
+        const Mapping = hasMapping ? self.mongoose.models[mappingName] : self.mongoose.model(mappingName, mappingSchema)
+
+        return Mapping.aggregate(
             // get the all the linked model mappings
             {$match: {[`${thisModelName}Id`]: this._id}},
             // lookup the documents from linked collection
-            {$lookup: {from: modelName, localField: `${thatModelName}Id`, foreignField: '_id', as: thatModelName}},
+            {$lookup: {from: relatedCollectionName, localField: `${thatModelName}Id`, foreignField: '_id', as: thatModelName}},
             // resolve the lookup array of thatModel
             {$unwind: `$${thatModelName}`},
             // add additional query of customer
@@ -165,17 +94,33 @@ class Mangostana {
             // group has 100 MB of RAM, allowDiskUse can write data to temporary files
             .allowDiskUse(true)
             .then((result) => {
-                return result[0][thatModelName]
+                if (result.length !== 0) {
+                    return result[0][thatModelName]
+                } else {
+                    return []
+                }
             })
     }
 
-    /**
-     *
-     * @param queryOpts
-     * @param thatModelName
-     * @returns {{}}
-     * @private
-     */
+    checkMapping (mappingName) {
+        let hasMapping = false
+
+        const modelsName = Object.keys(self.models)
+
+        modelsName.forEach((modelName) => {
+            if (modelName.toLowerCase() === mappingName) {
+                hasMapping = true
+            }
+        })
+        return hasMapping
+    }
+
+    _generateMappingName (thisCollectionName, thatCollectionName) {
+        return thisCollectionName.toLowerCase() > thatCollectionName.toLowerCase() ?
+            `${thatCollectionName}-${thisCollectionName}` :
+            `${thisCollectionName}-${thatCollectionName}`
+    }
+
     _generateQuery (queryOpts = {}, thatModelName) {
         let query = {}
 
@@ -189,8 +134,8 @@ class Mangostana {
     }
 }
 
-function getMangostana () {
-    return self
+function mangostana (mongoose) {
+    return (self = new Mangostana(mongoose))
 }
 
-var self = module.exports = new Mangostana()
+module.exports = mangostana
