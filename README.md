@@ -57,25 +57,14 @@ Promise
 
 ## API
 
-### mangostana.connect(String)
+### mangostana(mongoose)
 
-Use mangostana to link MongoDB.
-
-*Example*
-
-```javascript
-mangostana.connect('mongodb://localhost/test')
-```
-
-### mangostana.createModel('ModelName', Schema, options)
-
-Use mangostana to create models.
+Amount the mangostana to mongoose.
 
 *Example*
 
 ```javascript
-mangostana.createModel('user', { name:  String }, {timestamps: true})
-mangostana.createModel('article', { title:  String, content: String })
+mangostana(mongoose)
 ```
 
 ### instance1.link(instance2)
@@ -126,4 +115,4 @@ Roger [@Emiya0306](https://github.com/Emiya0306)
 
 #License
 Copyright Roger 2016
-Licensed under the MIT License. Enjoy
+Enjoy
