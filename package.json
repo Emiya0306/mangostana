@@ -1,6 +1,6 @@
 {
   "name": "mangostana",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A simple database process plugin based on mongoose to deal with documents relationship.",
   "main": "index.js",
   "author": "Emiya0306",
