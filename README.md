@@ -25,13 +25,14 @@ How to use it?
 ```javascript
 const mangostana = require('mangostana')
 
-mangostana.connect('mongodb://localhost/test')
+mongoose.connect('mongodb://localhost/test')
+mangostana(mongoose)
 
-mangostana.createModel('user', { name:  String })
-mangostana.createModel('article', { title:  String, content: String })
+const User = mongoose.model('user', { name: String })
+const Article = mongoose.model('article', { title: String, content: String })
 
-const user = new mangostana.models.user({ name: 'Hey! I\'m a foo!' })
-const article = new mangostana.models.article({ title: 'article', content: 'content' })
+const user = new User({ name: 'Hey! I\'m a foo!' })
+const article = new Article({ title: 'article', content: 'content' })
 
 let userResult, articleResult
 

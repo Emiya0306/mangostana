@@ -1,7 +1,7 @@
 {
   "name": "mangostana",
-  "version": "0.0.3",
-  "description": "A simple database process framework based on mongoose to deal with documents relationship.",
+  "version": "0.0.4",
+  "description": "A simple database process plugin based on mongoose to deal with documents relationship.",
   "main": "index.js",
   "author": "Emiya0306",
   "license": "MIT",
@@ -13,7 +13,8 @@
     "model",
     "document",
     "database",
-    "data"
+    "data",
+    "relation"
   ],
   "scripts": {
     "start": "node .",
@@ -31,7 +32,6 @@
     "node": ">=6.0.0"
   },
   "dependencies": {
-    "mongoose": "^4.5.8",
     "pluralize": "^3.0.0"
   },
   "devDependencies": {
