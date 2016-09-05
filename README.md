@@ -51,7 +51,13 @@ Promise
         return userResult.getRelation('articles', {title: 'article'})
     })
     .then((relatedArticle) => {
-        console.log(relatedArticle)
+        console.log('relatedArticle', relatedArticle)
+    })
+    .then(() => {
+        return userResult.link(articleResult).as('friends', true)
+    })
+    .then((friends) => {
+        console.log('friends', friends)
     })
 ```
 
@@ -75,6 +81,16 @@ Link the relation between two documents. Now it is not support the documents whi
 
 ```javascript
 userResult.link(articleResult)
+```
+
+### instance1.link(instance2).as('relationship', isTwo-way?)
+
+Link the relation between two documents use special relationship. Just like user and user can be friends, also can be single friend.
+
+*Example*
+
+```javascript
+userResult.link(articleResult).as('myFavourite', true)
 ```
 
 ### instance1.unlink(instance2)
