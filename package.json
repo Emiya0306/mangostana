@@ -1,11 +1,11 @@
 {
   "name": "mangostana",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A simple database process plugin based on mongoose to deal with documents relationship.",
   "main": "index.js",
   "author": "Emiya0306",
   "license": "MIT",
-  "homepage": "https://github.com/Emiya0306/mangostana#readme",
+  "homepage": "https://github.com/Emiya0306/mongoose-mangostana#readme",
   "keywords": [
     "mongodb",
     "mongoose",
@@ -22,10 +22,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Emiya0306/mangostana.git"
+    "url": "git+https://github.com/Emiya0306/mongoose-mangostana.git"
   },
   "bugs": {
-    "url": "https://github.com/Emiya0306/mangostana/issues",
+    "url": "https://github.com/Emiya0306/mongoose-mangostana/issues",
     "email": "415413233@qq.com"
   },
   "engines": {
