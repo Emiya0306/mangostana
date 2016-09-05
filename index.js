@@ -10,25 +10,30 @@ class MappingQuery {
 
         this.thisModelName = pluralize.singular(thisModel.collection.name, 1)
         this.thatModelName = pluralize.singular(thatModel.collection.name, 1)
+
+        this.thatModelName = this.thisModelName == this.thatModelName ? `${this.thatModelName}Duplicate` : this.thatModelName
     }
 
     as (relationName, bothRelation) {
+        const thatModelName = this.thatModelName.replace('Duplicate', '')
         this.thatModelName = relationName
 
         const mappingName = `${pluralize.singular(relationName.toLowerCase(), 1)}Mapping`
-        const Mapping = this.generateMappingModel(mappingName)
+        const Mapping = this.generateMappingModel(mappingName, true)
 
         const relations = []
 
         relations.push(new Mapping({
             [`${this.thisModelName}Id`]: this.thisModel._id,
-            [`${this.thatModelName}Id`]: this.thatModel._id
+            [`${this.thatModelName}Id`]: this.thatModel._id,
+            [`${this.thatModelName}Type`]: thatModelName
         }))
 
         if(bothRelation) {
             relations.push(new Mapping({
                 [`${this.thisModelName}Id`]: this.thatModel._id,
-                [`${this.thatModelName}Id`]: this.thisModel._id
+                [`${this.thatModelName}Id`]: this.thisModel._id,
+                [`${this.thatModelName}Type`]: thatModelName
             }))
         }
 
@@ -73,16 +78,22 @@ class MappingQuery {
         return action
     }
 
-    generateMappingModel (mappingName) {
+    generateMappingModel (mappingName, hasType) {
         const hasMapping = checkMappingExisted(mappingName)
 
         if (hasMapping) {
             return self.mongoose.models[mappingName]
         } else {
-            const mappingSchema = new self.Schema({
+            const schema = {
                 [`${this.thisModelName}Id`]: self.Schema.Types.ObjectId,
                 [`${this.thatModelName}Id`]: self.Schema.Types.ObjectId
-            }, {collection: mappingName})
+            }
+
+            if(hasType) {
+                schema[`${this.thatModelName}Type`] = String
+            }
+
+            const mappingSchema = new self.Schema(schema, {collection: mappingName})
 
             return self.mongoose.model(mappingName, mappingSchema)
         }
