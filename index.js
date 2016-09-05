@@ -2,6 +2,93 @@ const pluralize = require('pluralize')
 
 var self
 
+class MappingQuery {
+    constructor (thisModel, thatModel, action) {
+        this.action = action
+        this.thisModel = thisModel
+        this.thatModel = thatModel
+
+        this.thisModelName = pluralize.singular(thisModel.collection.name, 1)
+        this.thatModelName = pluralize.singular(thatModel.collection.name, 1)
+    }
+
+    as (relationName, bothRelation) {
+        this.thatModelName = relationName
+
+        const mappingName = `${pluralize.singular(relationName.toLowerCase(), 1)}Mapping`
+        const Mapping = this.generateMappingModel(mappingName)
+
+        const relations = []
+
+        relations.push(new Mapping({
+            [`${this.thisModelName}Id`]: this.thisModel._id,
+            [`${this.thatModelName}Id`]: this.thatModel._id
+        }))
+
+        if(bothRelation) {
+            relations.push(new Mapping({
+                [`${this.thisModelName}Id`]: this.thatModel._id,
+                [`${this.thatModelName}Id`]: this.thisModel._id
+            }))
+        }
+
+        return Promise.all(
+            relations.map(relation => relation.save())
+        )
+    }
+
+    then (resolve, reject) {
+        return this.generatePromise().then(resolve, reject)
+    }
+
+    catch (reject) {
+        return this.generatePromise().then(null, reject)
+    }
+
+    generatePromise () {
+        let action
+
+        const mappingName = generateMappingName(this.thisModelName, this.thatModelName)
+        const Mapping = this.generateMappingModel(mappingName)
+
+        switch (this.action) {
+            case 'link':
+                action = new Mapping({
+                    [`${this.thisModelName}Id`]: this.thisModel._id,
+                    [`${this.thatModelName}Id`]: this.thatModel._id
+                }).save()
+                break
+
+            case 'unlink':
+                action = Mapping.findOneAndRemove({
+                    [`${this.thisModelName}Id`]: this.thisModel._id,
+                    [`${this.thatModelName}Id`]: this.thatModel._id
+                })
+                break
+
+            default:
+                throw new Error('Unsupport action type on MappingQuery')
+                break
+        }
+        return action
+    }
+
+    generateMappingModel (mappingName) {
+        const hasMapping = checkMappingExisted(mappingName)
+
+        if (hasMapping) {
+            return self.mongoose.models[mappingName]
+        } else {
+            const mappingSchema = new self.Schema({
+                [`${this.thisModelName}Id`]: self.Schema.Types.ObjectId,
+                [`${this.thatModelName}Id`]: self.Schema.Types.ObjectId
+            }, {collection: mappingName})
+
+            return self.mongoose.model(mappingName, mappingSchema)
+        }
+    }
+}
+
 class Mangostana {
     constructor (mongoose) {
         this.mongoose = mongoose
@@ -19,47 +106,11 @@ class Mangostana {
     }
 
     link (that) {
-        const thisModelName = pluralize.singular(this.collection.name, 1)
-        const thatModelName = pluralize.singular(that.collection.name, 1)
-
-        const mappingName = self._generateMappingName(thisModelName, thatModelName)
-
-        const hasMapping = self.checkMapping(mappingName)
-
-        const mappingSchema = new self.Schema({
-            [`${thisModelName}Id`]: self.Schema.Types.ObjectId,
-            [`${thatModelName}Id`]: self.Schema.Types.ObjectId
-        }, {collection: mappingName})
-
-        const Mapping = hasMapping ? self.mongoose.models[mappingName] : self.mongoose.model(mappingName, mappingSchema)
-
-        const mapping = new Mapping({
-            [`${thisModelName}Id`]: this._id,
-            [`${thatModelName}Id`]: that._id
-        })
-
-        return mapping.save()
+        return new MappingQuery(this, that, 'link')
     }
 
     unlink (that) {
-        const thisModelName = pluralize.singular(this.collection.name, 1)
-        const thatModelName = pluralize.singular(that.collection.name, 1)
-
-        const mappingName = self._generateMappingName(thisModelName, thatModelName)
-
-        const hasMapping = self.checkMapping(mappingName)
-
-        const mappingSchema = new self.Schema({
-            [`${thisModelName}Id`]: self.Schema.Types.ObjectId,
-            [`${thatModelName}Id`]: self.Schema.Types.ObjectId
-        }, {collection: mappingName})
-
-        const Mapping = hasMapping ? self.mongoose.models[mappingName] : self.mongoose.model(mappingName, mappingSchema)
-
-        return Mapping.findOneAndRemove({
-            [`${thisModelName}Id`]: this._id,
-            [`${thatModelName}Id`]: that._id
-        })
+        return new MappingQuery(this, that, 'unlink')
     }
 
     getRelation (modelName, queryOpts) {
@@ -68,9 +119,9 @@ class Mangostana {
         const relatedCollectionName = pluralize.plural(modelName.toLowerCase(), 4)
         const query = self._generateQuery(queryOpts, thatModelName)
 
-        const mappingName = self._generateMappingName(thisModelName, thatModelName)
+        const mappingName = generateMappingName(thisModelName, thatModelName)
 
-        const hasMapping = self.checkMapping(mappingName)
+        const hasMapping = checkMappingExisted(mappingName)
 
         const mappingSchema = new self.Schema({
             [`${thisModelName}Id`]: self.Schema.Types.ObjectId,
@@ -102,25 +153,6 @@ class Mangostana {
             })
     }
 
-    checkMapping (mappingName) {
-        let hasMapping = false
-
-        const modelsName = Object.keys(self.models)
-
-        modelsName.forEach((modelName) => {
-            if (modelName.toLowerCase() === mappingName) {
-                hasMapping = true
-            }
-        })
-        return hasMapping
-    }
-
-    _generateMappingName (thisCollectionName, thatCollectionName) {
-        return thisCollectionName.toLowerCase() > thatCollectionName.toLowerCase() ?
-            `${thatCollectionName}-${thisCollectionName}` :
-            `${thisCollectionName}-${thatCollectionName}`
-    }
-
     _generateQuery (queryOpts = {}, thatModelName) {
         let query = {}
 
@@ -132,6 +164,25 @@ class Mangostana {
 
         return query
     }
+}
+
+function generateMappingName (thisCollectionName, thatCollectionName) {
+    return thisCollectionName.toLowerCase() > thatCollectionName.toLowerCase() ?
+        `${thatCollectionName}-${thisCollectionName}` :
+        `${thisCollectionName}-${thatCollectionName}`
+}
+
+function checkMappingExisted (mappingName) {
+    let hasMapping = false
+
+    const modelsName = Object.keys(self.models)
+
+    modelsName.forEach((modelName) => {
+        if (modelName.toLowerCase() === mappingName) {
+            hasMapping = true
+        }
+    })
+    return hasMapping
 }
 
 function mangostana (mongoose) {
