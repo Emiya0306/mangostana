@@ -97,11 +97,10 @@ Get related documents which is related with this document. You can use your own 
 userResult.getRelation('articles', {title: 'article'})
 ```
 
-## In feature
+## In future
 
-It will use observe on createModel API, and auto assign model methods on documents.
-
-Just like `user.articles()`, `user.articles(query).tags(query)`, `user.articles().unlink()`.
+- Add `user.link(user).as('friends')`, `user.unlink(user).as('friends')`.
+- Add `user.getRelation('friends').with('children').with('toys')`.
 
 # Tests
 Test can be run simply
@@ -110,9 +109,6 @@ Test can be run simply
 npm run test
 ```
 
-#Authors
-Roger [@Emiya0306](https://github.com/Emiya0306)
-
-#License
-Copyright Roger 2016
+#Contributing
+If you have any idea, please tell us. Welcome to give me pull request.
 Enjoy
