@@ -47,3 +47,6 @@ Promise
     .then((friend) => {
         console.log('friend', friend)
     })
+    .catch((err) => {
+        console.log(err)
+    })

@@ -144,6 +144,8 @@ class RelationQuery {
     generateAggregate () {
         return this.Mapping.findOne({[`${this.thisModelName}Id`]: this.targetModel._id})
             .then((mapping) => {
+                if(!mapping) return []
+
                 const collectionName = this.relationMapping ?
                     pluralize.plural(mapping[`${this.thatModelName}Type`], 4) : this.relatedCollectionName
 
