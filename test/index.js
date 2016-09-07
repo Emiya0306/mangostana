@@ -7,22 +7,25 @@ mangostana(mongoose)
 const User = mongoose.model('user', { name: String })
 const Article = mongoose.model('article', { title: String, content: String })
 
-const user1 = new User({ name: 'Hey! I\'m a foo!' })
-const user2 = new User({ name: 'Hey! I\'m a bar!' })
+const user1 = new User({ name: 'user1' })
+const user2 = new User({ name: 'user2' })
+const user3 = new User({ name: 'user2' })
 const article = new Article({ title: 'article', content: 'content' })
 
-let user1Result, articleResult, user2Result
+let user1Result, articleResult, user2Result, user3Result
 
 Promise
     .all([
         user1.save(),
         article.save(),
-        user2.save()
+        user2.save(),
+        user3.save()
     ])
     .then((result) => {
         user1Result = result[0]
         articleResult = result[1]
         user2Result = result[2]
+        user3Result = result[3]
 
         return user1Result.link(articleResult)  // link two document
     })
@@ -33,8 +36,14 @@ Promise
         console.log('relatedArticle', relatedArticle)
     })
     .then(() => {
-        return user1Result.link(user2Result).as('friends', true)
+        return Promise.all([
+            user1Result.link(user2Result).as('friends', true),
+            user1Result.link(user3Result).as('friends', true)
+        ])
     })
     .then((friends) => {
-        console.log('friends', friends)
+        return user1Result.getRelation('friends')
+    })
+    .then((friend) => {
+        console.log('friend', friend)
     })

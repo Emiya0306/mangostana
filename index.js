@@ -16,9 +16,10 @@ class MappingQuery {
 
     as (relationName, bothRelation) {
         const thatModelName = this.thatModelName.replace('Duplicate', '')
+        relationName = pluralize.singular(relationName.toLowerCase(), 1)
         this.thatModelName = relationName
 
-        const mappingName = `${pluralize.singular(relationName.toLowerCase(), 1)}Mapping`
+        const mappingName = `${relationName}Mapping`
         const Mapping = this.generateMappingModel(mappingName, true)
 
         const relations = []
@@ -100,6 +101,85 @@ class MappingQuery {
     }
 }
 
+class RelationQuery {
+    constructor (targetModel, relationship, queryOpts) {
+        this.targetModel = targetModel
+        this.thisModelName = pluralize.singular(targetModel.collection.name, 1)
+        this.thatModelName = pluralize.singular(relationship.toLowerCase(), 1)
+        this.relatedCollectionName = pluralize.plural(relationship.toLowerCase(), 4)
+        this.query = self._generateQuery(queryOpts, this.thatModelName)
+
+        this.mappingName = this.isModelExisted(this.thatModelName) !== -1 ?
+            generateMappingName(this.thisModelName, this.thatModelName) : `${this.thatModelName}Mapping`
+
+        const hasMapping = checkMappingExisted(this.mappingName)
+        this.relationMapping = this.isRelationMapping(this.mappingName)
+
+        let mappingSchema = {
+            [`${this.thisModelName}Id`]: self.Schema.Types.ObjectId,
+            [`${this.thatModelName}Id`]: self.Schema.Types.ObjectId
+        }
+
+        if(this.relationMapping) {
+            mappingSchema[`${this.thatModelName}Type`] = String
+        }
+
+        mappingSchema = new self.Schema(mappingSchema, {collection: this.mappingName})
+
+        this.Mapping = hasMapping ? self.mongoose.models[this.mappingName] : self.mongoose.model(this.mappingName, mappingSchema)
+    }
+
+    isRelationMapping (mappingName) {
+        return mappingName.indexOf('Mapping') !== -1
+    }
+
+    with () {
+
+    }
+
+    isModelExisted (modelName) {
+        return Object.keys(self.mongoose.models).indexOf(modelName)
+    }
+
+    generateAggregate () {
+        return this.Mapping.findOne({[`${this.thisModelName}Id`]: this.targetModel._id})
+            .then((mapping) => {
+                const collectionName = this.relationMapping ?
+                    pluralize.plural(mapping[`${this.thatModelName}Type`], 4) : this.relatedCollectionName
+
+                return this.Mapping.aggregate(
+                    // get the all the linked model mappings
+                    {$match: {[`${this.thisModelName}Id`]: this.targetModel._id}},
+                    // lookup the documents from linked collection
+                    {$lookup: {from: collectionName, localField: `${this.thatModelName}Id`, foreignField: '_id', as: this.thatModelName}},
+                    // resolve the lookup array of thatModel
+                    {$unwind: `$${this.thatModelName}`},
+                    // add additional query of customer
+                    {$match: this.query},
+                    // group the documents together
+                    {$group: {_id: `$${this.thisModelName}Id`, [this.thatModelName]: {$addToSet: `$${this.thatModelName}`}}}
+                    )
+                    // group has 100 MB of RAM, allowDiskUse can write data to temporary files
+                    .allowDiskUse(true)
+                    .then((result) => {
+                        if (result.length !== 0) {
+                            return result[0][this.thatModelName]
+                        } else {
+                            return []
+                        }
+                    })
+            })
+    }
+
+    then (resolve, reject) {
+        return this.generateAggregate().then(resolve, reject)
+    }
+
+    catch (reject) {
+        return this.generateAggregate().then(null, reject)
+    }
+}
+
 class Mangostana {
     constructor (mongoose) {
         this.mongoose = mongoose
@@ -125,43 +205,7 @@ class Mangostana {
     }
 
     getRelation (modelName, queryOpts) {
-        const thisModelName = pluralize.singular(this.collection.name, 1)
-        const thatModelName = pluralize.singular(modelName.toLowerCase(), 1)
-        const relatedCollectionName = pluralize.plural(modelName.toLowerCase(), 4)
-        const query = self._generateQuery(queryOpts, thatModelName)
-
-        const mappingName = generateMappingName(thisModelName, thatModelName)
-
-        const hasMapping = checkMappingExisted(mappingName)
-
-        const mappingSchema = new self.Schema({
-            [`${thisModelName}Id`]: self.Schema.Types.ObjectId,
-            [`${thatModelName}Id`]: self.Schema.Types.ObjectId
-        }, {collection: mappingName})
-
-        const Mapping = hasMapping ? self.mongoose.models[mappingName] : self.mongoose.model(mappingName, mappingSchema)
-
-        return Mapping.aggregate(
-            // get the all the linked model mappings
-            {$match: {[`${thisModelName}Id`]: this._id}},
-            // lookup the documents from linked collection
-            {$lookup: {from: relatedCollectionName, localField: `${thatModelName}Id`, foreignField: '_id', as: thatModelName}},
-            // resolve the lookup array of thatModel
-            {$unwind: `$${thatModelName}`},
-            // add additional query of customer
-            {$match: query},
-            // group the documents together
-            {$group: {_id: `$${thisModelName}Id`, [thatModelName]: {$addToSet: `$${thatModelName}`}}}
-        )
-            // group has 100 MB of RAM, allowDiskUse can write data to temporary files
-            .allowDiskUse(true)
-            .then((result) => {
-                if (result.length !== 0) {
-                    return result[0][thatModelName]
-                } else {
-                    return []
-                }
-            })
+        return new RelationQuery(this, modelName, queryOpts)
     }
 
     _generateQuery (queryOpts = {}, thatModelName) {
@@ -189,10 +233,11 @@ function checkMappingExisted (mappingName) {
     const modelsName = Object.keys(self.models)
 
     modelsName.forEach((modelName) => {
-        if (modelName.toLowerCase() === mappingName) {
+        if (modelName.toLowerCase() === mappingName.toLowerCase()) {
             hasMapping = true
         }
     })
+
     return hasMapping
 }
 
