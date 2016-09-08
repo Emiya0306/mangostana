@@ -87,7 +87,7 @@ mangostana(mongoose)
 
 ### instance1.link(instance2)
 
-Link the relation between two documents. Now it is not support the documents which have the same model.
+Link the relation between two documents. If you want to link the same model between two documents, you need to use link.as.
 
 *Example*
 
